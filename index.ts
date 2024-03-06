@@ -93,18 +93,6 @@ export class Sticky {
             isScrollAfterElementEnd ?
                 this.triggerBottom - this.triggerTop :
                 0
-
-        console.log('windowScroll', windowScroll)
-        console.log('this.containerTop', this.containerTop)
-        console.log('this.stepWindow.offsetTop', this.stepWindow.offsetTop)
-        console.log('this.gapTop', this.gapTop)
-        console.log('this.sliderHeight', this.sliderHeight)
-        console.log('this.controlHeight', this.controlHeight)
-        console.log('this.triggerTop', this.triggerTop)
-        console.log('this.triggerBottom', this.triggerBottom)
-        console.log('isScrollAfterElementTop', isScrollAfterElementTop)
-        console.log('isScrollAfterElementEnd', isScrollAfterElementEnd)
-        
         
         this.stepWindow.style.transform = `translateY(${transform}px)`
     }
