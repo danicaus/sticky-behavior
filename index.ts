@@ -1,74 +1,113 @@
 export class Sticky {
-    public section: HTMLDivElement
-    public stepWrapper: HTMLDivElement
-    public stepWindow: HTMLDivElement
-    public steps: NodeListOf<HTMLDivElement>
-    public controls: NodeListOf<HTMLDivElement>
-    sliderHeight: number
+    section: HTMLElement
+    stepSlider: HTMLElement
+    stepWindow: HTMLElement
+    steps: NodeListOf<HTMLElement>
+    controls: NodeListOf<HTMLElement>
     
+    containerTop: number
+    gapTop: number
+    sliderHeight: number
+    triggerTop: number
+    triggerBottom: number
+    controlHeight: number
     constructor(groupName: string) {
         this.section = document.querySelector(`[data-${groupName}]`)
-        this.stepWrapper = document.querySelector(`[data-${groupName}-wrapper]`)
-        this.stepWindow = document.querySelector(`[data-${groupName}-window]`)
-        this.steps = document.querySelectorAll(`[data-${groupName}-step]`)
-        this.controls = document.querySelectorAll(`[data-${groupName}-img]`)
-        
-        // this.indiceStepAtual = 0
-        this.sliderHeight = this.getStepWrapperHeight()
-        
-        this.section.style.willChange = 'transform'
-        this.section.style.padding = '11.375rem 3.875rem'
-        this.stepWrapper.style.position = 'relative'
+        this.stepSlider = this.section.querySelector(`[data-${groupName}-wrapper]`)
+        this.stepWindow = this.section.querySelector(`[data-${groupName}-window]`)
+        this.steps = this.section.querySelectorAll(`[data-${groupName}-step]`)
+        this.controls = this.section.querySelectorAll(`[data-${groupName}-img]`)
         
         this.checkPosition = this.checkPosition.bind(this)
+        this.styleSetup = this.styleSetup.bind(this)
+        document.addEventListener('load', this.checkPosition)
+        document.addEventListener('scroll', this.checkPosition)
+        document.addEventListener('resize', this.styleSetup)
         
-        this.checkPosition()
-        window.addEventListener('load', this.checkPosition)
-        window.addEventListener('scroll', this.checkPosition)
+        this.run()
+    }
+
+    run() {
+        // wait for page to be fully loaded
+        const pageLoaded = setInterval(() => {
+            if (document.readyState === 'complete') {
+                clearInterval(pageLoaded)
+                this.styleSetup()
+                this.checkPosition()
+            }
+        }, 10);
+    }
+    
+    styleSetup() {
+        this.stepSlider.style.position = 'relative'
+        this.containerTop = this.stepSlider.offsetTop
+        this.sliderHeight = this.getStepWrapperHeight()
+        this.controlHeight = this.getControlHeight()
+        this.gapTop = this.getGapTop()
+        this.triggerTop = this.getTriggerTop()
+        this.triggerBottom = this.getTriggerBottom()
         
+        this.section.style.minHeight = `${window.innerHeight}px`
+        this.stepWindow.style.height = `${this.controlHeight}px`
+        this.steps.forEach(step => {
+            step.style.display = 'flex'
+            step.style.flexDirection = 'column'
+            step.style.justifyContent = 'flex-end'
+        })
+        this.section.style.padding = `${this.gapTop}px 0`
     }
     
     getStepWrapperHeight() {
-        return this.stepWrapper.getBoundingClientRect().height
+        return this.stepSlider.getBoundingClientRect().height
     }
-    
-    getStepWrapperPosition() {
-        return this.stepWrapper.getBoundingClientRect().top
+
+    getControlHeight() {
+        const controlSizes : number[] = []
+        this.controls.forEach(control => controlSizes.push(control.getBoundingClientRect().height))
+        return controlSizes.sort((a, b) => a - b)[controlSizes.length - 1]
+    }
+
+    getGapTop() {
+        const windowInnerHeight = window.innerHeight
+        const controlHeightSum = this.controlHeight * this.controls.length
+        const gap = this.sliderHeight - controlHeightSum
+
+        return controlHeightSum > windowInnerHeight ? 80 : gap
     }
     
     getTriggerTop() {
-        return (window.innerHeight - this.getStepWrapperHeight()) / 2
-    }
-    
-    getStepHeight() {
-        const stepsSizes : number[] = [] 
-        this.steps.forEach(step => stepsSizes.push(step.getBoundingClientRect().height))
-        const biggerStep = stepsSizes.sort((a, b) => a - b)[stepsSizes.length - 1]
-        return biggerStep
+        return this.containerTop + this.stepWindow.offsetTop - this.gapTop
     }
 
-    isSectionOnTop() {
-        return this.section.getBoundingClientRect().top <= 0
-    }
-    
-    hasExibitionEnded() {
-        return this.section.getBoundingClientRect().bottom <= window.innerHeight
+    getTriggerBottom() {
+        return this.containerTop + this.sliderHeight - this.controlHeight - this.gapTop
     }
     
     checkPosition() {
-        this.stepWindow.style.transform = `translateY(0px)`
+        const windowScroll = window.scrollY
         
-        if(this.isSectionOnTop()) {
-            if (this.hasExibitionEnded()) {
-                this.stepWindow.style.transform = `translateY(${113.75 - this.getStepWrapperPosition()}px)`
-                return
-            }
-            this.stepWindow.style.transform = `translateY(${113.75 - this.getStepWrapperPosition()}px)`
-        }
+        const isScrollAfterElementTop = windowScroll >= this.triggerTop && windowScroll <= this.triggerBottom
+        const isScrollAfterElementEnd = windowScroll > this.triggerBottom
+        const transform = isScrollAfterElementTop ?
+            windowScroll - this.triggerTop :
+            isScrollAfterElementEnd ?
+                this.triggerBottom - this.triggerTop :
+                0
+
+        console.log('windowScroll', windowScroll)
+        console.log('this.containerTop', this.containerTop)
+        console.log('this.stepWindow.offsetTop', this.stepWindow.offsetTop)
+        console.log('this.gapTop', this.gapTop)
+        console.log('this.sliderHeight', this.sliderHeight)
+        console.log('this.controlHeight', this.controlHeight)
+        console.log('this.triggerTop', this.triggerTop)
+        console.log('this.triggerBottom', this.triggerBottom)
+        console.log('isScrollAfterElementTop', isScrollAfterElementTop)
+        console.log('isScrollAfterElementEnd', isScrollAfterElementEnd)
+        
+        
+        this.stepWindow.style.transform = `translateY(${transform}px)`
     }
 }
 
-// se não tiver imagens, eu crio elementos invisíveis de mesmo tamanho de cada step. a alteração dos steps vai considerar a posiçào do scroll. quando o controle chegar no topo, muda o step
-
 //adicionar um destroy
-
